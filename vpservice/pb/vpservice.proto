@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package pb;
+
+service VPService {
+  rpc GetVPs(VPRequest) returns (VPReturn) {}
+  rpc GetRRSpoofers(RRSpooferRequest) returns (RRSpooferResponse) {}
+  rpc GetTSSpoofers(TSSpooferRequest) returns (TSSpooferResponse) {}
+  rpc TestNewVPCapabilities(TestNewVPCapabilitiesRequest) returns (TestNewVPCapabilitiesResponse) {} 
+  rpc TryUnquarantine(TryUnquarantineRequest) returns (TryUnquarantineResponse) {} 
+}
+
+message VantagePoint {
+  uint32 ip         =  1;
+  string hostname   =  2;
+  string site       =  3;
+  bool timestamp    =  4;
+  bool record_route =  5;
+  bool spoof        =  6;
+  bool rec_spoof    =  7;
+  bool ping         =  8;
+  bool trace        =  9;
+}
+
+message VPRequest {
+}
+
+message VPReturn {
+    repeated VantagePoint vps = 1;
+}
+
+message RRSpooferRequest {
+  uint32 addr =  1;
+  uint32 max  =  2;
+}
+
+message RRSpooferResponse {
+  uint32 addr =  1;
+  uint32 max  =  2;
+  repeated VantagePoint spoofers = 3;
+}
+
+message TSSpooferRequest {
+  uint32 addr =  1;
+  uint32 max  =  2;
+}
+
+message TSSpooferResponse {
+  uint32 addr =  1;
+  uint32 max  =  2;
+  repeated VantagePoint spoofers = 3;
+}
+
+message TestNewVPCapabilitiesRequest {
+  uint32 addr = 1;
+  string hostname = 2;
+  string site = 3;
+}
+
+message TestNewVPCapabilitiesResponse {
+  bool can_reverse_traceroutes = 1;
+}
+
+message TryUnquarantineRequest {
+  repeated VantagePoint vantage_points = 1;
+  repeated VantagePoint vantage_points_for_testing = 2;
+  bool is_try_all_vantage_points = 3;
+  bool is_self_for_testing = 4;
+  bool is_test_only_active = 5;
+}
+
+message TryUnquarantineResponse {
+}
+

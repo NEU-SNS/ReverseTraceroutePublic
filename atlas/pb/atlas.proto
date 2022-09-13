@@ -1,0 +1,160 @@
+syntax = "proto3";
+
+package atlas.pb;
+
+option go_package = "pb";
+
+import "github.com/NEU-SNS/ReverseTraceroute/datamodel/traceroute.proto";
+
+service Atlas {
+    rpc GetIntersectingPath(stream IntersectionRequest) returns (stream IntersectionResponse) {}
+    rpc GetPathsWithToken(stream TokenRequest) returns (stream TokenResponse) {}
+    rpc InsertTraceroutes(InsertTraceroutesRequest) returns (InsertTraceroutesResponse) {}
+    rpc CheckIntersectingPath(CheckIntersectionRequest) returns (CheckIntersectionResponse) {}
+    rpc MarkTracerouteStale(MarkTracerouteStaleRequest) returns (MarkTracerouteStaleResponse) {}
+    rpc MarkTracerouteStaleSource(MarkTracerouteStaleSourceRequest) returns (MarkTracerouteStaleSourceResponse) {}
+    rpc RunAtlasRRPings(RunAtlasRRPingsRequest) returns (RunAtlasRRPingsResponse) {}
+    rpc RunTracerouteAtlasToSource(RunTracerouteAtlasToSourceRequest) returns (RunTracerouteAtlasToSourceResponse) {}
+    rpc GetAvailableHopAtlasPerSource(GetAvailableHopAtlasPerSourceRequest) returns (GetAvailableHopAtlasPerSourceResponse) {}
+
+}
+
+message Hop {
+    uint32 Ip  = 1;
+    uint32 ttl = 2;
+    IntersectHopType intersect_hop_type = 3;
+}
+
+message Path {
+    uint32 address       = 1;
+    uint32 dest          = 2;
+    repeated Hop hops    = 3;
+}
+
+enum IntersectHopType {
+    EXACT = 0;
+    BETWEEN = 1;
+}
+
+enum IResponseType {
+    NONE_FOUND     = 0;
+    TOKEN          = 1;
+    PATH           = 2;
+    ERROR          = 3;
+}
+
+message IntersectionRequest {
+    uint32    address =  1;
+     uint32      dest =  2;
+    int64   staleness =  3;
+     bool use_aliases =  4;
+     bool use_atlas_rr = 5;
+     bool ignore_source =  6;
+     uint32       src =  7;
+     bool ignore_source_as = 8;
+     int32 source_as = 9;
+     repeated string platforms = 10;
+     int64 staleness_before_refresh = 11; // in minutes
+}
+
+message IntersectionResponse {
+    IResponseType   type = 1;
+    uint32         token = 2;
+    Path            path = 3;
+    string         error = 4;
+    uint32         src   = 5;
+    string         platform = 6; 
+    int64 source_probe_id = 7;
+    int64 traceroute_id  = 8;
+    int64 timestamp = 9;
+    uint32 distance_to_source = 10;
+
+}
+
+message TokenRequest {
+    uint32 token = 1;
+}
+
+message TokenResponse {
+    uint32       token  =  1;
+    IResponseType type  =  2; 
+    Path          path  =  3;
+    string       error  =  4;
+    uint32         src   = 5;
+    string         platform = 6; 
+    int64 source_probe_id = 7;
+    int64 traceroute_id =  8;
+    int64 timestamp = 9;
+    uint32 distance_to_source = 10;
+}
+
+message InsertTraceroutesRequest {
+    repeated datamodel.Traceroute traceroutes  = 1;
+    bool is_run_rr_pings = 2;
+    bool is_run_rr_intersections = 3;
+    bool only_intersections = 4;
+}
+
+message InsertTraceroutesResponse {
+    repeated int64 ids = 1;
+}
+
+message CheckIntersectionRequest {
+    int64 traceroute_id  = 1;
+    uint32 hop_intersection = 2;
+}
+
+message CheckIntersectionResponse {
+    Path Path = 1;
+}
+
+message MarkTracerouteStaleRequest{
+    uint32 intersectIP = 1;
+    int64 old_traceroute_id = 2;
+    int64 new_traceroute_id = 3;
+}
+
+message MarkTracerouteStaleResponse {
+    
+}
+
+
+message RunAtlasRRPingsRequest {
+    repeated datamodel.Traceroute traceroutes = 1;
+    bool only_intersections = 2;
+}
+
+message RunAtlasRRPingsResponse {
+    
+}
+
+message RunTracerouteAtlasToSourceRequest {
+    uint32 source = 1;
+    bool  with_ripe = 2;
+    string ripe_account = 3;
+    string ripe_key = 4;
+}
+
+message RunTracerouteAtlasToSourceResponse {
+    
+}
+
+message MarkTracerouteStaleSourceRequest {
+    uint32 source = 1;
+}
+
+message MarkTracerouteStaleSourceResponse {
+
+}
+
+message GetAvailableHopAtlasPerSourceRequest {
+
+}
+
+message AtlasHops {
+    repeated uint32 hops = 1;
+}
+
+message GetAvailableHopAtlasPerSourceResponse {
+    map<uint32, AtlasHops> hops_per_source = 1;
+}

@@ -1,0 +1,297 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "pb";
+
+import "google/api/annotations.proto";
+import "google/protobuf/duration.proto";
+
+service Revtr {
+  rpc RunRevtr(RunRevtrReq) returns (RunRevtrResp) {
+    option(google.api.http) = {
+      post: "/api/v2/revtr"
+      body: "*"
+    };
+  }
+  rpc GetRevtr(GetRevtrReq) returns (GetRevtrResp) {
+    option(google.api.http) = {
+      get: "/api/v2/revtr/{batch_id}",
+    };
+  }
+
+  rpc GetRevtrByLabel(GetRevtrByLabelReq) returns (GetRevtrByLabelResp) {
+    option(google.api.http) = {
+      get: "/api/v2/revtr/{label}",
+    };
+  }
+
+  rpc GetRevtrMetaOnly(GetRevtrMetaOnlyReq) returns (GetRevtrMetaOnlyResp) {
+    option(google.api.http) = {
+      get: "/api/v2/revtr/meta/{batch_id}",
+    };
+  }
+
+  rpc GetRevtrBatchStatus(GetRevtrBatchStatusReq) returns (GetRevtrBatchStatusResp) {
+    option(google.api.http) = {
+      get: "/api/v2/revtr/status/{batch_id}",
+    };
+  }
+
+  rpc UpdateRevtr(UpdateRevtrReq) returns (UpdateRevtrResp){}
+
+  rpc GetSources(GetSourcesReq) returns (GetSourcesResp) {
+    option(google.api.http) = {
+      get: "/api/v2/sources",
+    };
+  }
+
+  rpc CleanAtlas(CleanAtlasReq) returns (CleanAtlasResp) {
+    option(google.api.http) = {
+      post: "/api/v2/atlas/clean",
+      body: "*"
+    };
+  }
+
+  rpc RunAtlas(RunAtlasReq) returns (RunAtlasResp) {
+    option(google.api.http) = {
+      post: "/api/v2/atlas/run",
+      body: "*"
+    };
+  }
+}
+
+message RevtrMeasurement {
+    string src             = 1;
+    string dst             = 2;
+    uint32 staleness       = 3;
+    uint32 id              = 4;
+    bool backoff_endhost   = 5;
+    string rr_vp_selection_algorithm = 6;
+    uint32 max_spoofers  = 7;
+    AtlasOptions atlas_options = 8;
+    SymmetryOptions symmetry_options = 9;
+    RRHeuristicsOptions heuristics_options = 10;
+    CheckDestBasedRoutingOptions check_dest_based_routing_options = 11;
+    string label = 12;
+    bool is_run_forward_traceroute = 13;
+    bool is_run_rtt_pings = 14;
+    bool use_timestamp = 15;
+    bool use_cache = 16;
+
+
+}
+
+message CheckDestBasedRoutingOptions{
+  bool check_tunnel = 1;
+}
+
+message RRHeuristicsOptions {
+  bool use_double_stamp = 1;
+}
+
+message AtlasOptions {
+  bool use_atlas = 1;
+  bool use_rr_pings = 2;
+  bool ignore_source = 3;
+  bool ignore_source_as = 4;
+  repeated string platforms = 5; 
+  int64 staleness = 6;
+  int64 staleness_before_refresh = 7; // in minutes
+
+}
+
+message SymmetryOptions {
+  bool is_allow_interdomain_symmetry = 1;
+}
+
+message RunRevtrReq {
+  repeated RevtrMeasurement revtrs  = 1;
+  string auth = 2;
+  bool checkDB = 3;
+}
+
+message RunRevtrResp {
+  uint32 batch_id   =  1;
+}
+
+message GetRevtrReq {
+  uint32 batch_id =  1;
+  string auth = 2;
+}
+
+message GetRevtrByLabelReq {
+  string label =  1;
+  string auth  = 2;
+}
+
+message GetRevtrByLabelResp {
+  repeated ReverseTraceroute revtrs = 1; 
+}
+
+message GetRevtrMetaOnlyReq {
+  uint32 batch_id =  1;
+  string auth = 2;
+}
+
+message GetRevtrMetaOnlyResp {
+  repeated ReverseTracerouteMetaOnly revtrs_meta = 1; 
+}
+
+message GetRevtrResp {
+  repeated ReverseTraceroute revtrs = 1; 
+}
+
+message GetRevtrBatchStatusReq {
+  uint32 batch_id =  1;
+  string auth = 2;
+}
+
+message GetRevtrBatchStatusResp {
+  repeated RevtrStatus revtrs_status = 1; 
+}
+
+message UpdateRevtrReq{
+  string auth = 1;
+  uint32 revtr_id = 2;
+  int64  traceroute_id = 3;
+}
+
+message UpdateRevtrResp {
+
+}
+
+message GetSourcesReq {
+  string auth = 1;
+}
+
+message GetSourcesResp {
+  repeated Source srcs =  1;
+}
+
+message Source {
+  string hostname =  1;
+  string ip       =  2;
+  string site     =  3;
+}
+message ReverseTracerouteMetaOnly {
+  RevtrStatus status     =  1; 
+  string src             =  2;
+  string dst             =  3;
+  uint32 id              =  4;
+}
+message ReverseTraceroute {
+  RevtrStatus status     =  1; 
+  string src             =  2;
+  string dst             =  3;
+  int64 runtime          =  4;
+  string stop_reason     =  5;
+  string date            =  6;
+  repeated RevtrHop path =  7;
+  uint32 id              =  8;
+  string fail_reason     =  9;
+  Stats stats            = 10;
+  map<uint32, RankedSpoofers> ranked_spoofers_by_hop  = 11;
+  string label           = 12;
+  int64 start_time       = 13;
+  int64 forward_traceroute_id = 14;
+}
+
+message Stats {
+  google.protobuf.Duration ts_duration               =  1;
+  google.protobuf.Duration rr_duration               =  2;
+  google.protobuf.Duration tr_to_src_duration        =  3;
+  google.protobuf.Duration assume_symmetric_duration =  4;
+  google.protobuf.Duration background_trs_duration   =  5;
+  google.protobuf.Duration dest_based_check_duration =  6;
+  int32 rr_probes                    =  7;
+  int32 spoofed_rr_probes            =  8;
+  int32 dest_based_check_rr_probes   =  9;
+  int32 dest_based_check_spoofed_rr_probes   =  10;
+  int32 ts_probes                    =  11;
+  int32 spoofed_ts_probes            =  12;
+  int32 rr_round_count               = 13;
+  int32 ts_round_count               = 14; 
+  int32 tr_to_src_round_count        = 15; 
+  int32 assume_symmetric_round_count = 16;
+  int32 background_trs_round_count   = 17;
+  int32 dest_based_check_round_count = 18;
+
+}
+message RankedSpoofers {
+  repeated RankedSpoofer ranked_spoofers = 1;
+}
+message RankedSpoofer{
+  uint32 rank = 1;
+  uint32 ip   = 2;
+  int64  measurement_id = 3;
+  string ranking_technique = 4;
+}
+
+message RevtrHop {  
+    string hop          = 1;
+    RevtrHopType type   = 2;
+    DestinationBasedRoutingType dest_based_routing_type  = 3;
+    int64 measurement_id = 4;
+    bool fromCache = 5;
+    uint32 rtt = 6;
+    int64 rtt_measurement_id = 7;
+}
+
+enum RevtrHopType {
+  DUMMY                                         = 0;
+  DST_REV_SEGMENT                               = 1;
+  DST_SYM_REV_SEGMENT                           = 2;
+  TR_TO_SRC_REV_SEGMENT                         = 3;
+  TR_TO_SRC_REV_SEGMENT_BETWEEN                 = 4;
+  RR_REV_SEGMENT                                = 5;
+  SPOOF_RR_REV_SEGMENT                          = 6;
+  TS_ADJ_REV_SEGMENT                            = 7;
+  SPOOF_TS_ADJ_REV_SEGMENT                      = 8;
+  SPOOF_TS_ADJ_REV_SEGMENT_TS_ZERO              = 9;
+  SPOOF_TS_ADJ_REV_SEGMENT_TS_ZERO_DOUBLE_STAMP = 10;
+}
+
+enum DestinationBasedRoutingType  {
+  NO_CHECK = 0;
+  NO_VIOLATION = 1;
+  TUNNEL   = 2;
+  LOAD_BALANCING = 3;
+}
+
+enum RevtrStatus {
+  DUMMY_X     = 0;
+  RUNNING     = 1;
+  COMPLETED   = 2;
+  CANCELED    = 3;
+}
+
+message RevtrUser {
+  uint32 id    =  1;
+  string name  =  2;
+  string email =  3;
+  uint32 max   =  4;
+  uint32 delay =  5;
+  string key   =  6; 
+  uint32 max_revtr_per_day = 7;
+  uint32 revtr_run_today = 8;
+  uint32 max_parallel_revtr = 9;
+}
+
+message CleanAtlasReq {
+  string source = 1;
+  string auth  = 2;
+}
+
+message CleanAtlasResp{
+
+}
+
+message RunAtlasReq {
+  string source = 1;
+  string auth = 2;
+}
+
+message RunAtlasResp {
+  
+}

@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+service Ranking {
+
+    // Get VPs in a ranked way.
+    //
+    // The user provides the list of measurements executed so far,
+    // so that the ranking service can always return the best option for the
+    // provided situation.
+    rpc getVPs(GetVPsReq) returns (GetVPsResp) {}
+    // Get the target lists from a hitlist file
+    rpc getTargetsFromHitlist(GetTargetsReq) returns (GetTargetsResp) {}
+}
+
+message GetVPsReq {
+    string ip = 1 ;
+    int32 numVPs = 2;
+    string rankingTechnique = 3;
+    repeated string executedMeasurements = 4;
+}
+
+message GetVPsResp{
+    repeated Source vps = 1;
+}
+
+message Source {
+    string hostname = 1;
+    string ip = 2;
+    string site = 3;
+    string ingress = 4;
+    float distance = 5;
+}
+
+message GetTargetsReq{
+    bool is_initial = 1;
+    bool is_only_addresses = 2;
+    repeated IPAddress ip_addresses = 3;
+    string granularity = 4;
+}
+
+message IPAddress {
+    string ip_address = 1;
+}
+
+message GetTargetsResp{
+    repeated string targets = 1;
+}

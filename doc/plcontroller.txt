@@ -1,0 +1,5 @@
+In the future, in order to accomodate load balancing across multiple planet-lab controllers,
+a possible modification would be to move control of the individual scamper processes onto the VPs.
+In order to requests a measurement, a planet-lab controller would make the measurement request through
+rpc to the appropriate VP and receive the results. This would allow any single planet-lab controller
+to issue measurements to any vantage point.
